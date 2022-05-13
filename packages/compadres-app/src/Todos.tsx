@@ -23,7 +23,12 @@ export const Todos: React.FC = () => {
 
   return (
     <>
-      <TodoList items={items} onItemToggle={toggle} onTitleChange={updateTitle} ref={listRef} />
+      <TodoList
+        items={items}
+        onItemToggle={toggle}
+        onTitleChange={updateTitle}
+        ref={listRef}
+      />
       <button onClick={addAndEdit}>Add</button>
     </>
   );
