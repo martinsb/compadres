@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import Automerge, { FreezeObject } from "automerge";
-import {v4 as uuidv4} from "uuid";
+import { v4 as uuidv4 } from "uuid";
 import { Item } from "../types";
 
 const initialItems: Item[] = [
@@ -21,22 +21,23 @@ const initialItems: Item[] = [
   },
 ];
 
-type Document = FreezeObject<{items: Item[]}>;
+type Document = FreezeObject<{ items: Item[] }>;
 
 export default function useTodos() {
-  const [doc, setDoc] = useState<Document>(Automerge.from({items: initialItems}));
-  const addItem = useCallback(
-    () => {
-      setDoc(Automerge.change(doc, "Add new item", (doc) => {
-          doc.items.push({
-            id: uuidv4(),
-            title: "",
-            done: false,
-          });
-      }))
-    },
-    [doc, setDoc]
+  const [doc, setDoc] = useState<Document>(
+    Automerge.from({ items: initialItems })
   );
+  const addItem = useCallback(() => {
+    setDoc(
+      Automerge.change(doc, "Add new item", (doc) => {
+        doc.items.push({
+          id: uuidv4(),
+          title: "",
+          done: false,
+        });
+      })
+    );
+  }, [doc, setDoc]);
   const toggleCompletion = useCallback(
     (itemId: string) => {
       setDoc(
@@ -48,12 +49,17 @@ export default function useTodos() {
     },
     [doc, setDoc]
   );
-  const updateTitle = useCallback((itemId: string, title: string) => {
-    setDoc(Automerge.change(doc, "Update item title", (doc) => {
-      const item = getItem(doc, itemId);
-      item.title = title;
-    }));
-  }, [doc, setDoc]);
+  const updateTitle = useCallback(
+    (itemId: string, title: string) => {
+      setDoc(
+        Automerge.change(doc, "Update item title", (doc) => {
+          const item = getItem(doc, itemId);
+          item.title = title;
+        })
+      );
+    },
+    [doc, setDoc]
+  );
   return {
     items: doc.items,
     add: addItem,
@@ -63,9 +69,9 @@ export default function useTodos() {
 }
 
 const getItem = (doc: Document, itemId: string): Item => {
-    const item = doc.items.find(({id}) => id === itemId);
-    if (!item) {
-      throw new Error("Item not found");
-    }
-    return item;
-}
+  const item = doc.items.find(({ id }) => id === itemId);
+  if (!item) {
+    throw new Error("Item not found");
+  }
+  return item;
+};

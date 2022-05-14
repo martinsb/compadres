@@ -1,4 +1,7 @@
 node_modules
 packages/compadres-app/node_modules
+packages/compadres-server/build
+packages/compadres-server/node_modules
+packages/compadres-server/yarn-error.log
 
 
