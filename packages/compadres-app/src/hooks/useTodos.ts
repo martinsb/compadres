@@ -2,7 +2,6 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import Automerge, { FreezeObject } from "automerge";
 import { v4 as uuidv4 } from "uuid";
 import { TodoServiceContext } from "../context/TodoServiceContext";
-import TodoService from "../service/todoService";
 
 import { Item, Project } from "compadres-common";
 
@@ -67,17 +66,21 @@ export default function useTodos(projectName: string) {
   );
 
   const handleProjectItems = useCallback((project: Project) => {
-    setDoc(Automerge.from({items: project.items}));
-  }, [setDoc]);
+    console.log({project});
+    if (project.name === projectName) {
+      setDoc(Automerge.from({items: project.items}));
+    }
+  }, [setDoc, projectName]);
 
   useEffect(() => {
     service.open(projectName);
     service.on("project-items", handleProjectItems);
     return () => {
-      service.off("project-items", handleProjectItems);
       //This means that we cannot have two hooks responsible for the
-      //same project.
+      //same project, currently, we'll be closing a project for the
+      //user globally.
       //TODO introduce some "counter" for each user in the server side
+      service.off("project-items", handleProjectItems);
       service.close(projectName);
     }
   }, [projectName]);
