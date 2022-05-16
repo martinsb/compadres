@@ -1,9 +1,10 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState, useRef } from "react";
 import Automerge, { FreezeObject } from "automerge";
 import { v4 as uuidv4 } from "uuid";
 import { TodoServiceContext } from "../context/TodoServiceContext";
 
 import { Item, Project } from "compadres-common";
+import usePrevious from "./usePrevious";
 
 const initialItems: Item[] = [
   // {
@@ -84,6 +85,19 @@ export default function useTodos(projectName: string) {
       service.close(projectName);
     }
   }, [projectName]);
+
+  const mounted = useRef<boolean>(false);
+  const prevDoc = usePrevious<Document>(doc);
+  useEffect(() => {
+    if (!prevDoc) {
+      return;
+    }
+    if (mounted.current) {
+      const changes = Automerge.getChanges(prevDoc, doc);
+      console.log({changes});
+    }
+    mounted.current = true;
+  }, [doc]);
 
   return {
     items: doc.items,
