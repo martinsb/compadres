@@ -1,29 +1,34 @@
-import { useCallback, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import Automerge, { FreezeObject } from "automerge";
 import { v4 as uuidv4 } from "uuid";
-import { Item } from "../types";
+import { TodoServiceContext } from "../context/TodoServiceContext";
+import TodoService from "../service/todoService";
+
+import { Item, Project } from "compadres-common";
 
 const initialItems: Item[] = [
-  {
-    id: uuidv4(),
-    title: "Feed the dog",
-    done: true,
-  },
-  {
-    id: uuidv4(),
-    title: "Grocery shopping",
-    done: false,
-  },
-  {
-    id: uuidv4(),
-    title: "Brush my teeth",
-    done: true,
-  },
+  // {
+  //   id: uuidv4(),
+  //   title: "Feed the dog",
+  //   done: true,
+  // },
+  // {
+  //   id: uuidv4(),
+  //   title: "Grocery shopping",
+  //   done: false,
+  // },
+  // {
+  //   id: uuidv4(),
+  //   title: "Brush my teeth",
+  //   done: true,
+  // },
 ];
 
 type Document = FreezeObject<{ items: Item[] }>;
 
-export default function useTodos() {
+export default function useTodos(projectName: string) {
+  const {service} = useContext(TodoServiceContext);
+
   const [doc, setDoc] = useState<Document>(
     Automerge.from({ items: initialItems })
   );
@@ -60,6 +65,23 @@ export default function useTodos() {
     },
     [doc, setDoc]
   );
+
+  const handleProjectItems = useCallback((project: Project) => {
+    setDoc(Automerge.from({items: project.items}));
+  }, [setDoc]);
+
+  useEffect(() => {
+    service.open(projectName);
+    service.on("project-items", handleProjectItems);
+    return () => {
+      service.off("project-items", handleProjectItems);
+      //This means that we cannot have two hooks responsible for the
+      //same project.
+      //TODO introduce some "counter" for each user in the server side
+      service.close(projectName);
+    }
+  }, [projectName]);
+
   return {
     items: doc.items,
     add: addItem,

@@ -6,7 +6,7 @@ import {
   ForwardRefRenderFunction,
   useLayoutEffect,
 } from "react";
-import { Item } from "../types";
+import { Item } from "compadres-common";
 
 export interface TodoListRef {
   editTitle: (itemId: string) => void;

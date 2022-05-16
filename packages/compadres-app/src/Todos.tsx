@@ -1,10 +1,10 @@
-import React, { useRef, useCallback, useEffect } from "react";
+import React, { useRef, useCallback, useEffect, useContext } from "react";
 import { TodoList, TodoListRef } from "./components/TodoList";
 
 import useTodos from "./hooks/useTodos";
 
-export const Todos: React.FC = () => {
-  const { items, toggle, add, updateTitle } = useTodos();
+export const Todos: React.FC<{projectName: string}> = ({projectName}) => {
+  const { items, toggle, add, updateTitle } = useTodos(projectName);
   const listRef = useRef<TodoListRef | null>(null);
 
   const adding = useRef(false);

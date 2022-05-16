@@ -3,23 +3,11 @@ import { RawData, WebSocket, WebSocketServer } from "ws";
 import { createServer } from "http";
 import { TodoService } from "./todos";
 
-type Message =
-  | {
-      type: "join";
-      payload: {
-        name: string;
-      };
-    }
-  | {
-      type: "project-list";
-      payload: string[];
-    }
-  | {
-      type: "error-name-taken";
-      payload: string;
-    };
+import { TodoMessage } from "compadres-common";
+import { assert } from "console";
 
 const users = new Map<WebSocket, string>();
+const projectRooms = new Map<string, Set<string>>(); //project name -> set of users
 
 const PORT = 3003;
 
@@ -45,8 +33,11 @@ socketServer.on("connection", async (socket) => {
         const { name } = message.payload;
         if (Array.from(users.values()).find((userName) => userName === name)) {
           sendMessage(socket, {
-            type: "error-name-taken",
-            payload: name,
+            type: "error",
+            payload: {
+              code: "name-taken",
+              name,
+            },
           });
           return;
         }
@@ -56,13 +47,38 @@ socketServer.on("connection", async (socket) => {
           type: "project-list",
           payload: projects,
         });
+        break;
+      }
+      case "open-project": {
+        const userName = users.get(socket)!;
+        const projectName = message.payload;
+        if (!projectRooms.has(projectName)) {
+          projectRooms.set(projectName, new Set<string>());
+        }
+        projectRooms.get(projectName)?.add(userName);
+        console.info(`User ${userName} opened project ${projectName}`);
+        const items = await service.listItems(projectName);
+        sendMessage(socket, {
+          type: "project-items",
+          payload: {
+            name: projectName,
+            items,
+          }
+        });
+        break;
+      }
+      case "close-project": {
+        const userName = users.get(socket)!;
+        const projectName = message.payload;
+        projectRooms.get(projectName)?.delete(userName);
+        console.info(`User ${userName} closed project ${projectName}`);
+        break;
       }
     }
   });
 });
 
 httpServer.on("upgrade", (req, socket, head) => {
-  //TODO auth?
   if (req.url === "/todows") {
     socketServer.handleUpgrade(req, socket, head, (ws) => {
       socketServer.emit("connection", ws, req);
@@ -76,15 +92,15 @@ httpServer.listen(PORT, () => {
   console.log(`Server listening to port ${PORT}`);
 });
 
-function parseMessage(data: RawData): Message | null {
+function parseMessage(data: RawData): TodoMessage | null {
   try {
     const message = JSON.parse(data.toString());
-    return message as Message;
+    return message as TodoMessage;
   } catch (e) {
     return null;
   }
 }
 
-function sendMessage(socket: WebSocket, message: Message) {
+function sendMessage(socket: WebSocket, message: TodoMessage) {
   socket.send(JSON.stringify(message));
 }

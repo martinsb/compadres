@@ -4,5 +4,9 @@
   "main": "index.js",
   "license": "MIT",
   "private": true,
-  "workspaces": ["./packages/compadres-app"]
+  "workspaces": [
+    "./packages/compadres-app",
+    "./packages/compadres-server",
+    "./packages/compadres-common"
+  ]
 }
