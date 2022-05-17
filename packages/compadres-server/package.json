@@ -7,6 +7,7 @@
     "start": "ts-node src/server.ts"
   },
   "dependencies": {
+    "@msgpack/msgpack": "^2.7.2",
     "automerge": "^1.0.1-preview.7",
     "express": "^4.18.1",
     "typescript": "^4.6.4",

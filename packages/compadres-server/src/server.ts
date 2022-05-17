@@ -6,6 +6,7 @@ import { TodoService } from "./todos";
 import { TodoMessage } from "compadres-common";
 import { assert } from "console";
 import Automerge, { BinaryChange } from "automerge";
+import {encode, decode} from "@msgpack/msgpack";
 
 const users = new Map<WebSocket, string>();
 const projectRooms = new Map<string, Set<string>>(); //project name -> set of users
@@ -63,7 +64,7 @@ socketServer.on("connection", async (socket) => {
           type: "project-data",
           payload: {
             name: projectName,
-            data: Array.from<number>(projectData),
+            data: projectData,
           }
         });
         break;
@@ -107,7 +108,10 @@ httpServer.listen(PORT, () => {
 
 function parseMessage(data: RawData): TodoMessage | null {
   try {
-    const message = JSON.parse(data.toString());
+    if (Array.isArray(data)) {
+      throw new Error("Raw data as a Buffer array is not supported yet");
+    }
+    const message = decode(new Uint8Array(data));
     return message as TodoMessage;
   } catch (e) {
     return null;
@@ -115,11 +119,12 @@ function parseMessage(data: RawData): TodoMessage | null {
 }
 
 function sendMessage(socket: WebSocket, message: TodoMessage) {
-  socket.send(JSON.stringify(message));
+  const encoded = encode(message);
+  socket.send(encoded, {binary: true});
 }
 
 function broadcast(message: TodoMessage, exclude?: WebSocket) {
-  const encoded = JSON.stringify(message);
+  const encoded = encode(message);
   for (const [socket, ] of users) {
     if (socket !== exclude) {
       socket.send(encoded);

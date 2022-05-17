@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import {encode, decode} from "@msgpack/msgpack";
 
 import { TodoError, TodoMessage } from "compadres-common";
 
@@ -65,7 +66,7 @@ export default class TodoService {
     this._emitter.removeListener(event, listener);
   }
 
-  sendChanges(projectName: string, changes: number[][]) {
+  sendChanges(projectName: string, changes: Uint8Array[]) {
     this._send({
       type: "project-changes",
       payload: {
@@ -77,12 +78,21 @@ export default class TodoService {
 
   async _send(message: TodoMessage) {
     await this._waitForOpen();
-    this._socket.send(JSON.stringify(message));
+    this._socket.send(encode(message));
   }
 
   _receive(event: MessageEvent) {
-    const message = JSON.parse(event.data) as TodoMessage;
-    this._emitter.emit(message.type, message.payload);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const buf = event.target?.result;
+      if (!buf) {
+        return;
+      }
+      const rawData = new Uint8Array(buf as ArrayBufferLike);
+      const message = decode(rawData) as TodoMessage;
+      this._emitter.emit(message.type, message.payload);
+    }
+    reader.readAsArrayBuffer(event.data);
   }
 
   async _waitForOpen(): Promise<void> {

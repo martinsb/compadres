@@ -41,13 +41,13 @@ export type TodoMessage =
       type: "project-data";
       payload: {
         name: string;
-        data: number[];
+        data: Uint8Array;
       };
     }
   | {
       type: "project-changes";
       payload: {
         name: string;
-        changes: number[][];
+        changes: Uint8Array[];
       };
     };

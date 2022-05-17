@@ -62,7 +62,7 @@ export class TodoService {
     return TODOS[projectName];
   }
 
-  async updateProject(projectName: string, changes: number[][]) {
+  async updateProject(projectName: string, changes: Uint8Array[]) {
     if (!(projectName in TODOS)) {
       throw new Error(`Project ${projectName} does not exist`);
     }

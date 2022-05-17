@@ -103,7 +103,7 @@ export default function useTodos(projectName: string) {
       if (changes.length) {
         service.sendChanges(
           projectName,
-          changes.map((c) => Array.from(c))
+          changes
         );
       }
       savedProject.current = doc;
