@@ -1,7 +1,6 @@
 import { EventEmitter } from "events";
-import { Change } from "automerge";
 
-import { TodoError, TodoMessage, Project } from "compadres-common";
+import { TodoError, TodoMessage } from "compadres-common";
 
 type InitOptions = {
   name: string;
@@ -13,6 +12,10 @@ interface TodoServiceEventMap {
     name: string;
     data: number[];
   };
+  "project-changes": {
+    name: string;
+    changes: number[][];
+  }
   "error": TodoError;
 }
 
@@ -23,7 +26,7 @@ export default class TodoService {
 
   constructor({name}: InitOptions) {
     this._name = name;
-    this._socket = new WebSocket("ws://localhost:3000/todows");
+    this._socket = new WebSocket("ws://192.168.9.156:3000/todows");
     this._socket.addEventListener("message", this._receive.bind(this));
   }
 

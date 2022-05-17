@@ -1,10 +1,9 @@
-import { useCallback, useContext, useEffect, useState } from "react";
-import Automerge, { FreezeObject, BinaryDocument } from "automerge";
+import { useCallback, useContext, useEffect, useState, useRef } from "react";
+import Automerge, { FreezeObject, BinaryDocument, BinaryChange } from "automerge";
 import { v4 as uuidv4 } from "uuid";
 import { TodoServiceContext } from "../context/TodoServiceContext";
 
 import { Item, Project } from "compadres-common";
-import usePrevious from "./usePrevious";
 
 type Items = { items: Item[] };
 
@@ -13,7 +12,10 @@ type ImmutableProject = FreezeObject<Project>;
 export default function useTodos(projectName: string) {
   const { service } = useContext(TodoServiceContext);
 
-  const [doc, setDoc] = useState<ImmutableProject | undefined>(undefined);
+  const [doc, _setDoc] = useState<ImmutableProject | undefined>(undefined);
+  const setDoc = useCallback((d: ImmutableProject | undefined) => {
+    _setDoc(d);
+  }, [_setDoc]);
   const addItem = useCallback(() => {
     setDoc(
       Automerge.change(doc, "Add new item", (doc) => {
@@ -48,35 +50,48 @@ export default function useTodos(projectName: string) {
     [doc, setDoc]
   );
 
+  const savedProject = useRef<ImmutableProject | undefined>(undefined);
+
   const handleProjectData = useCallback(
     ({ name, data }: { name: string; data: number[] }) => {
       if (!data || name !== projectName) {
         return;
-      }
-      const project = Automerge.load<Project>(
+      }      const project = Automerge.load<Project>(
         Uint8Array.from(data) as BinaryDocument
       );
+      savedProject.current = project;
       setDoc(project);
     },
     [setDoc, projectName]
   );
 
+  const handleProjectChanges = useCallback(({name, changes}: {name: string; changes: number[][]}) => {
+    if (name !== projectName || !savedProject.current) {
+      return;
+    }
+    const binChanges = changes.map((c) => Uint8Array.from(c) as BinaryChange);
+    const [nextDoc,] = Automerge.applyChanges(savedProject.current, binChanges);
+    savedProject.current = nextDoc;
+    setDoc(nextDoc);
+  }, [setDoc, projectName]);
+
   useEffect(() => {
     service.on("project-data", handleProjectData);
+    service.on("project-changes", handleProjectChanges);
     service.open(projectName);
     return () => {
       //This means that we cannot have two hooks responsible for the
       //same project, currently, we'll be closing a project for the
       //user globally.
       //TODO introduce some "counter" for each user in the server side
+      service.off("project-changes", handleProjectChanges);
       service.off("project-data", handleProjectData);
       service.close(projectName);
     };
-  }, [projectName, handleProjectData, service]);
+  }, [projectName, service, handleProjectData, handleProjectChanges]);
 
-  const prevDoc = usePrevious<ImmutableProject | undefined>(doc);
   useEffect(() => {
-    if (!prevDoc || !doc) {
+    if (!doc || !savedProject.current) {
       return;
     }
     //During initialization, when component is mounted twice in StrictMode,
@@ -84,17 +99,20 @@ export default function useTodos(projectName: string) {
     //This causes RangeError when calling `Automerge.getChanges` which we can
     //ignore, therefore we put this in try..catch.
     try {
-      const changes = Automerge.getChanges(prevDoc, doc);
-      service.sendChanges(
-        projectName,
-        changes.map((c) => Array.from(c))
-      );
+      const changes = Automerge.getChanges(savedProject.current, doc);
+      if (changes.length) {
+        service.sendChanges(
+          projectName,
+          changes.map((c) => Array.from(c))
+        );
+      }
+      savedProject.current = doc;
     } catch (e) {
       if (!(e instanceof RangeError)) {
         throw e;
       }
     }
-  }, [doc, prevDoc, service, projectName]);
+  }, [doc, service, projectName]);
 
   return {
     items: doc?.items || [],

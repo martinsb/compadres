@@ -1,9 +1,9 @@
 import {Item, Project} from "compadres-common";
 
-import Automerge, {FreezeObject, BinaryChange, Change} from "automerge";
+import Automerge, {FreezeObject, BinaryChange, Change, BinaryDocument} from "automerge";
 
-const TODOS: { [key: string]: FreezeObject<Project> } = {
-  todo1: Automerge.from<Project>({
+const TODOS: { [key: string]: BinaryDocument } = {
+  todo1: Automerge.save(Automerge.from<Project>({
     name: "Groceries",
     items: [
       {
@@ -22,8 +22,8 @@ const TODOS: { [key: string]: FreezeObject<Project> } = {
         done: false,
       },
     ] as Item[],
-  }),
-  todo2: Automerge.from<Project>({
+  })),
+  todo2: Automerge.save(Automerge.from<Project>({
     name: "Daily routine",
     items: [
       {
@@ -47,7 +47,7 @@ const TODOS: { [key: string]: FreezeObject<Project> } = {
         done: false,
       },
     ] as Item[],
-  }),
+  })),
 };
 
 export class TodoService {
@@ -55,7 +55,7 @@ export class TodoService {
     return Promise.resolve(Object.keys(TODOS));
   }
 
-  async getProject(projectName: string): Promise<Project> {
+  async getProject(projectName: string): Promise<BinaryDocument> {
     if (!(projectName in TODOS)) {
       throw new Error(`Project ${projectName} does not exist`);
     }
@@ -66,7 +66,7 @@ export class TodoService {
     if (!(projectName in TODOS)) {
       throw new Error(`Project ${projectName} does not exist`);
     }
-    const project = TODOS[projectName];
+    const project = Automerge.load<Project>(TODOS[projectName]);
     const binChanges = changes.map(c => {
       return Uint8Array.from(c) as BinaryChange;
       // const bin = Uint8Array.from(c);
@@ -75,6 +75,6 @@ export class TodoService {
     });
     const [nextProject, patch] = Automerge.applyChanges(project, binChanges);
     console.log({patch});
-    TODOS[projectName] = nextProject;
+    TODOS[projectName] = Automerge.save(nextProject);
   }
 }

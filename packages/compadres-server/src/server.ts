@@ -58,12 +58,12 @@ socketServer.on("connection", async (socket) => {
         }
         projectRooms.get(projectName)?.add(userName);
         console.info(`User ${userName} opened project ${projectName}`);
-        const project = await service.getProject(projectName);
+        const projectData = await service.getProject(projectName);
         sendMessage(socket, {
           type: "project-data",
           payload: {
             name: projectName,
-            data: Array.from<number>(Automerge.save(project)),
+            data: Array.from<number>(projectData),
           }
         });
         break;
@@ -78,6 +78,13 @@ socketServer.on("connection", async (socket) => {
       case "project-changes": {
         const {name: projectName, changes} = message.payload;
         await service.updateProject(projectName, changes);
+        broadcast({
+          type: "project-changes",
+          payload: {
+            name: projectName,
+            changes,
+          }
+        }, socket)
         console.log("changes applied");
       }
     }
@@ -109,4 +116,13 @@ function parseMessage(data: RawData): TodoMessage | null {
 
 function sendMessage(socket: WebSocket, message: TodoMessage) {
   socket.send(JSON.stringify(message));
+}
+
+function broadcast(message: TodoMessage, exclude?: WebSocket) {
+  const encoded = JSON.stringify(message);
+  for (const [socket, ] of users) {
+    if (socket !== exclude) {
+      socket.send(encoded);
+    }
+  }
 }
