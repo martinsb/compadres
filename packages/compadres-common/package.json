@@ -3,5 +3,8 @@
   "version": "1.0.0",
   "main": "src/index.ts",
   "license": "MIT",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "automerge": "^1.0.1-preview.7"
+  }
 }

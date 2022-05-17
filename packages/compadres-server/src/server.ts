@@ -5,6 +5,7 @@ import { TodoService } from "./todos";
 
 import { TodoMessage } from "compadres-common";
 import { assert } from "console";
+import Automerge, { BinaryChange } from "automerge";
 
 const users = new Map<WebSocket, string>();
 const projectRooms = new Map<string, Set<string>>(); //project name -> set of users
@@ -57,12 +58,12 @@ socketServer.on("connection", async (socket) => {
         }
         projectRooms.get(projectName)?.add(userName);
         console.info(`User ${userName} opened project ${projectName}`);
-        const items = await service.listItems(projectName);
+        const project = await service.getProject(projectName);
         sendMessage(socket, {
-          type: "project-items",
+          type: "project-data",
           payload: {
             name: projectName,
-            items,
+            data: Array.from<number>(Automerge.save(project)),
           }
         });
         break;
@@ -73,6 +74,11 @@ socketServer.on("connection", async (socket) => {
         projectRooms.get(projectName)?.delete(userName);
         console.info(`User ${userName} closed project ${projectName}`);
         break;
+      }
+      case "project-changes": {
+        const {name: projectName, changes} = message.payload;
+        await service.updateProject(projectName, changes);
+        console.log("changes applied");
       }
     }
   });

@@ -1,37 +1,19 @@
-import { useCallback, useContext, useEffect, useState, useRef } from "react";
-import Automerge, { FreezeObject } from "automerge";
+import { useCallback, useContext, useEffect, useState } from "react";
+import Automerge, { FreezeObject, BinaryDocument } from "automerge";
 import { v4 as uuidv4 } from "uuid";
 import { TodoServiceContext } from "../context/TodoServiceContext";
 
 import { Item, Project } from "compadres-common";
 import usePrevious from "./usePrevious";
 
-const initialItems: Item[] = [
-  // {
-  //   id: uuidv4(),
-  //   title: "Feed the dog",
-  //   done: true,
-  // },
-  // {
-  //   id: uuidv4(),
-  //   title: "Grocery shopping",
-  //   done: false,
-  // },
-  // {
-  //   id: uuidv4(),
-  //   title: "Brush my teeth",
-  //   done: true,
-  // },
-];
+type Items = { items: Item[] };
 
-type Document = FreezeObject<{ items: Item[] }>;
+type ImmutableProject = FreezeObject<Project>;
 
 export default function useTodos(projectName: string) {
-  const {service} = useContext(TodoServiceContext);
+  const { service } = useContext(TodoServiceContext);
 
-  const [doc, setDoc] = useState<Document>(
-    Automerge.from({ items: initialItems })
-  );
+  const [doc, setDoc] = useState<ImmutableProject | undefined>(undefined);
   const addItem = useCallback(() => {
     setDoc(
       Automerge.change(doc, "Add new item", (doc) => {
@@ -66,48 +48,63 @@ export default function useTodos(projectName: string) {
     [doc, setDoc]
   );
 
-  const handleProjectItems = useCallback((project: Project) => {
-    console.log({project});
-    if (project.name === projectName) {
-      setDoc(Automerge.from({items: project.items}));
-    }
-  }, [setDoc, projectName]);
+  const handleProjectData = useCallback(
+    ({ name, data }: { name: string; data: number[] }) => {
+      if (!data || name !== projectName) {
+        return;
+      }
+      const project = Automerge.load<Project>(
+        Uint8Array.from(data) as BinaryDocument
+      );
+      setDoc(project);
+    },
+    [setDoc, projectName]
+  );
 
   useEffect(() => {
+    service.on("project-data", handleProjectData);
     service.open(projectName);
-    service.on("project-items", handleProjectItems);
     return () => {
       //This means that we cannot have two hooks responsible for the
       //same project, currently, we'll be closing a project for the
       //user globally.
       //TODO introduce some "counter" for each user in the server side
-      service.off("project-items", handleProjectItems);
+      service.off("project-data", handleProjectData);
       service.close(projectName);
-    }
-  }, [projectName]);
+    };
+  }, [projectName, handleProjectData, service]);
 
-  const mounted = useRef<boolean>(false);
-  const prevDoc = usePrevious<Document>(doc);
+  const prevDoc = usePrevious<ImmutableProject | undefined>(doc);
   useEffect(() => {
-    if (!prevDoc) {
+    if (!prevDoc || !doc) {
       return;
     }
-    if (mounted.current) {
+    //During initialization, when component is mounted twice in StrictMode,
+    //`doc` is also initialized twice with the same data.
+    //This causes RangeError when calling `Automerge.getChanges` which we can
+    //ignore, therefore we put this in try..catch.
+    try {
       const changes = Automerge.getChanges(prevDoc, doc);
-      console.log({changes});
+      service.sendChanges(
+        projectName,
+        changes.map((c) => Array.from(c))
+      );
+    } catch (e) {
+      if (!(e instanceof RangeError)) {
+        throw e;
+      }
     }
-    mounted.current = true;
-  }, [doc]);
+  }, [doc, prevDoc, service, projectName]);
 
   return {
-    items: doc.items,
+    items: doc?.items || [],
     add: addItem,
     toggle: toggleCompletion,
     updateTitle,
   };
 }
 
-const getItem = (doc: Document, itemId: string): Item => {
+const getItem = (doc: Items, itemId: string): Item => {
   const item = doc.items.find(({ id }) => id === itemId);
   if (!item) {
     throw new Error("Item not found");

@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useEffect, useContext } from "react";
+import React, { useRef, useCallback, useEffect } from "react";
 import { TodoList, TodoListRef } from "./components/TodoList";
 
 import useTodos from "./hooks/useTodos";

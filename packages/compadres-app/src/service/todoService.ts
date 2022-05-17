@@ -1,6 +1,7 @@
 import { EventEmitter } from "events";
+import { Change } from "automerge";
 
-import { Project, TodoError, TodoMessage } from "compadres-common";
+import { TodoError, TodoMessage, Project } from "compadres-common";
 
 type InitOptions = {
   name: string;
@@ -8,7 +9,10 @@ type InitOptions = {
 
 interface TodoServiceEventMap {
   "project-list": string[];
-  "project-items": Project;
+  "project-data": {
+    name: string;
+    data: number[];
+  };
   "error": TodoError;
 }
 
@@ -56,6 +60,16 @@ export default class TodoService {
 
   off<K extends keyof TodoServiceEventMap>(event: K, listener: (this: TodoService, args: TodoServiceEventMap[K]) => void): void {
     this._emitter.removeListener(event, listener);
+  }
+
+  sendChanges(projectName: string, changes: number[][]) {
+    this._send({
+      type: "project-changes",
+      payload: {
+        name: projectName,
+        changes,
+      }
+    })
   }
 
   async _send(message: TodoMessage) {

@@ -36,10 +36,18 @@ export type TodoMessage =
   | {
       type: "close-project";
       payload: string; //project name
-    } | {
-      type: "project-items";
+    }
+  | {
+      type: "project-data";
       payload: {
         name: string;
-        items: Item[];
-      }
+        data: number[];
+      };
+    }
+  | {
+      type: "project-changes";
+      payload: {
+        name: string;
+        changes: number[][];
+      };
     };

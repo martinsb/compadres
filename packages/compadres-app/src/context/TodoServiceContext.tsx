@@ -18,5 +18,4 @@ export const TodoServiceProvider: React.FC<{
       {children}
     </TodoServiceContext.Provider>
   );
-  return null;
 };
