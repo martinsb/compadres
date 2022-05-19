@@ -17,6 +17,10 @@ const ListContainer = styled.div`
   width: 300px;
 `;
 
+const NoProjects = styled.article`
+  margin-top: 0;
+`;
+
 function App() {
   const [userName, setUserName] = useState("");
   const [connected, setConnected] = useState(false);
@@ -68,11 +72,11 @@ function App() {
     [setProjects]
   );
 
+  const selectedProjects = projects.filter(({ selected }) => selected);
+
   return (
     <>
-      {!connected && (
-        <Join onLogin={setUserName} errorMessage={errorMessage} />
-      )}
+      {!connected && <Join onLogin={setUserName} errorMessage={errorMessage} />}
       {connected && (
         <TodoServiceProvider service={serviceRef.current!}>
           <Main>
@@ -83,13 +87,18 @@ function App() {
                 onSelectionChange={selectProject}
               />
             </ListContainer>
-            <div>
-              {projects
-                .filter(({ selected }) => selected)
-                .map(({ name }) => (
+            {!!selectedProjects.length && (
+              <div>
+                {selectedProjects.map(({ name }) => (
                   <Todos key={name} projectName={name} />
                 ))}
-            </div>
+              </div>
+            )}
+            {!selectedProjects.length && (
+              <NoProjects>
+                Please choose one or more projects from the sidebar on the left
+              </NoProjects>
+            )}
           </Main>
         </TodoServiceProvider>
       )}
