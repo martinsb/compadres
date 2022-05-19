@@ -35,7 +35,6 @@ function App() {
     }
     const service = new TodoService({ name: userName });
     service.on("project-list", (projects) => {
-      console.log("got project list", projects);
       setConnected(true);
       setProjects(projects.map((name) => ({ name, selected: false })));
     });
