@@ -6,7 +6,7 @@ import { TodoService } from "./todos";
 import { TodoMessage } from "compadres-common";
 import { assert } from "console";
 import Automerge, { BinaryChange } from "automerge";
-import {encode, decode} from "@msgpack/msgpack";
+import { encode, decode } from "@msgpack/msgpack";
 
 const users = new Map<WebSocket, string>();
 const projectRooms = new Map<string, Set<string>>(); //project name -> set of users
@@ -65,7 +65,7 @@ socketServer.on("connection", async (socket) => {
           payload: {
             name: projectName,
             data: projectData,
-          }
+          },
         });
         break;
       }
@@ -77,15 +77,19 @@ socketServer.on("connection", async (socket) => {
         break;
       }
       case "project-changes": {
-        const {name: projectName, changes} = message.payload;
+        const { name: projectName, changes } = message.payload;
         await service.updateProject(projectName, changes);
-        broadcast({
-          type: "project-changes",
-          payload: {
-            name: projectName,
-            changes,
-          }
-        }, socket)
+        broadcast(
+          projectName,
+          {
+            type: "project-changes",
+            payload: {
+              name: projectName,
+              changes,
+            },
+          },
+          socket
+        );
         console.log("changes applied");
       }
     }
@@ -120,13 +124,20 @@ function parseMessage(data: RawData): TodoMessage | null {
 
 function sendMessage(socket: WebSocket, message: TodoMessage) {
   const encoded = encode(message);
-  socket.send(encoded, {binary: true});
+  socket.send(encoded, { binary: true });
 }
 
-function broadcast(message: TodoMessage, exclude?: WebSocket) {
+function broadcast(
+  projectName: string,
+  message: TodoMessage,
+  exclude?: WebSocket
+) {
   const encoded = encode(message);
-  for (const [socket, ] of users) {
-    if (socket !== exclude) {
+  for (const [socket, userName] of users) {
+    if (socket === exclude) {
+      continue;
+    }
+    if (projectRooms.get(projectName)?.has(userName)) {
       socket.send(encoded);
     }
   }
