@@ -9,14 +9,39 @@ import {
 } from "react";
 import styled from "styled-components";
 import { Item } from "compadres-common";
+import { GarbageIcon } from "./icons/GarbageIcon";
 
 const ListElement = styled.ul`
   padding-left: 0;
 `;
 
+const DeleteButton = styled.button`
+  color: var(--primary);
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin: 0 0 0 10px;
+  border: 0;
+  background: transparent;
+
+  > svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+`;
+
 const ItemElement = styled.li`
   display: flex;
   align-items: center;
+
+  ${DeleteButton} {
+    visibility: hidden;
+  }
+
+  &:hover ${DeleteButton} {
+    visibility: visible;
+  }
 `;
 
 const TitleInput = styled.input`
@@ -45,10 +70,11 @@ interface TodoListProps {
   onItemToggle: (itemId: string) => void;
   onTitleChange: (itemId: string, title: string) => void;
   onAddItem: () => void;
+  onRemoveItem: (itemId: string) => void;
 }
 
 const List: ForwardRefRenderFunction<TodoListRef, TodoListProps> = (
-  { items, onItemToggle, onTitleChange, onAddItem },
+  { items, onItemToggle, onTitleChange, onAddItem, onRemoveItem },
   ref
 ) => {
   const [focusedItemId, setFocusedItemId] = useState<string | undefined>(
@@ -82,7 +108,9 @@ const List: ForwardRefRenderFunction<TodoListRef, TodoListProps> = (
         setFocusedItemId(undefined);
       } else if (e.key === "Tab") {
         if (!e.shiftKey) {
-          const currentIndex = items.findIndex(({ id: itemId }) => itemId === id);
+          const currentIndex = items.findIndex(
+            ({ id: itemId }) => itemId === id
+          );
           if (currentIndex === items.length - 1) {
             e.preventDefault();
             onAddItem();
@@ -115,9 +143,21 @@ const List: ForwardRefRenderFunction<TodoListRef, TodoListProps> = (
               />
             )}
             {!editing && (
-              <span tabIndex={0} onClick={startEditing} onFocus={startEditing}>
-                {title}
-              </span>
+              <>
+                <span
+                  tabIndex={0}
+                  onClick={startEditing}
+                  onFocus={startEditing}
+                >
+                  {title}
+                </span>
+                <DeleteButton
+                  onClick={() => onRemoveItem(id)}
+                  data-tooltip="Delete item"
+                >
+                  <GarbageIcon />
+                </DeleteButton>
+              </>
             )}
           </ItemElement>
         );

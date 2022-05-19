@@ -8,8 +8,8 @@ const Header = styled.h3`
   margin-bottom: 0;
 `;
 
-export const Todos: React.FC<{projectName: string}> = ({projectName}) => {
-  const { items, toggle, add, updateTitle } = useTodos(projectName);
+export const Todos: React.FC<{ projectName: string }> = ({ projectName }) => {
+  const { items, toggle, add, remove, updateTitle } = useTodos(projectName);
   const listRef = useRef<TodoListRef | null>(null);
 
   const adding = useRef(false);
@@ -34,6 +34,7 @@ export const Todos: React.FC<{projectName: string}> = ({projectName}) => {
         onItemToggle={toggle}
         onTitleChange={updateTitle}
         onAddItem={addAndEdit}
+        onRemoveItem={remove}
         ref={listRef}
       />
       <button onClick={addAndEdit}>Add</button>

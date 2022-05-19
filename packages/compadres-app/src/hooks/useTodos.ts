@@ -1,5 +1,9 @@
 import { useCallback, useContext, useEffect, useState, useRef } from "react";
-import Automerge, { FreezeObject, BinaryDocument, BinaryChange } from "automerge";
+import Automerge, {
+  FreezeObject,
+  BinaryDocument,
+  BinaryChange,
+} from "automerge";
 import { v4 as uuidv4 } from "uuid";
 import { TodoServiceContext } from "../context/TodoServiceContext";
 
@@ -13,9 +17,12 @@ export default function useTodos(projectName: string) {
   const { service } = useContext(TodoServiceContext);
 
   const [doc, _setDoc] = useState<ImmutableProject | undefined>(undefined);
-  const setDoc = useCallback((d: ImmutableProject | undefined) => {
-    _setDoc(d);
-  }, [_setDoc]);
+  const setDoc = useCallback(
+    (d: ImmutableProject | undefined) => {
+      _setDoc(d);
+    },
+    [_setDoc]
+  );
   const addItem = useCallback(() => {
     setDoc(
       Automerge.change(doc, "Add new item", (doc) => {
@@ -27,6 +34,21 @@ export default function useTodos(projectName: string) {
       })
     );
   }, [doc, setDoc]);
+
+  const removeItem = useCallback(
+    (itemId: string) => {
+      setDoc(
+        Automerge.change(doc, "Remove item", (doc) => {
+          const index = doc.items.findIndex(({ id }) => id === itemId);
+          if (index !== -1) {
+            doc.items.splice(index, 1);
+          }
+        })
+      );
+    },
+    [doc, setDoc]
+  );
+
   const toggleCompletion = useCallback(
     (itemId: string) => {
       setDoc(
@@ -56,7 +78,8 @@ export default function useTodos(projectName: string) {
     ({ name, data }: { name: string; data: number[] }) => {
       if (!data || name !== projectName) {
         return;
-      }      const project = Automerge.load<Project>(
+      }
+      const project = Automerge.load<Project>(
         Uint8Array.from(data) as BinaryDocument
       );
       savedProject.current = project;
@@ -65,15 +88,21 @@ export default function useTodos(projectName: string) {
     [setDoc, projectName]
   );
 
-  const handleProjectChanges = useCallback(({name, changes}: {name: string; changes: number[][]}) => {
-    if (name !== projectName || !savedProject.current) {
-      return;
-    }
-    const binChanges = changes.map((c) => Uint8Array.from(c) as BinaryChange);
-    const [nextDoc,] = Automerge.applyChanges(savedProject.current, binChanges);
-    savedProject.current = nextDoc;
-    setDoc(nextDoc);
-  }, [setDoc, projectName]);
+  const handleProjectChanges = useCallback(
+    ({ name, changes }: { name: string; changes: number[][] }) => {
+      if (name !== projectName || !savedProject.current) {
+        return;
+      }
+      const binChanges = changes.map((c) => Uint8Array.from(c) as BinaryChange);
+      const [nextDoc] = Automerge.applyChanges(
+        savedProject.current,
+        binChanges
+      );
+      savedProject.current = nextDoc;
+      setDoc(nextDoc);
+    },
+    [setDoc, projectName]
+  );
 
   useEffect(() => {
     service.on("project-data", handleProjectData);
@@ -101,10 +130,7 @@ export default function useTodos(projectName: string) {
     try {
       const changes = Automerge.getChanges(savedProject.current, doc);
       if (changes.length) {
-        service.sendChanges(
-          projectName,
-          changes
-        );
+        service.sendChanges(projectName, changes);
       }
       savedProject.current = doc;
     } catch (e) {
@@ -117,6 +143,7 @@ export default function useTodos(projectName: string) {
   return {
     items: doc?.items || [],
     add: addItem,
+    remove: removeItem,
     toggle: toggleCompletion,
     updateTitle,
   };
