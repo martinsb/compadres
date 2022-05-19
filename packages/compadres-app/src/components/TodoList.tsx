@@ -69,6 +69,7 @@ const List: ForwardRefRenderFunction<TodoListRef, TodoListProps> = (
     <ListElement>
       {items.map(({ id, title, done }, index) => {
         const editing = id === focusedItemId;
+        const startEditing = () => setFocusedItemId(id);
         return (
           <ItemElement key={id}>
             <CheckboxInput
@@ -84,7 +85,11 @@ const List: ForwardRefRenderFunction<TodoListRef, TodoListProps> = (
                 onChange={(e) => onTitleChange(id, e.target.value)}
               />
             )}
-            {!editing && <span onClick={() => setFocusedItemId(id)}>{title}</span>}
+            {!editing && (
+              <span tabIndex={0} onClick={startEditing} onFocus={startEditing}>
+                {title}
+              </span>
+            )}
           </ItemElement>
         );
       })}
