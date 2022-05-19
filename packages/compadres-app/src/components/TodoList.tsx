@@ -6,7 +6,34 @@ import {
   ForwardRefRenderFunction,
   useLayoutEffect,
 } from "react";
+import styled from "styled-components";
 import { Item } from "compadres-common";
+
+const ListElement = styled.ul`
+  padding-left: 0;
+`;
+
+const ItemElement = styled.li`
+  display: flex;
+  align-items: center;
+`;
+
+const TitleInput = styled.input`
+  padding: 0 !important;
+  margin-bottom: 0 !important;
+  height: auto !important;
+  border: none;
+  outline: none;
+
+  :focus {
+    --box-shadow: none !important;
+  }
+`;
+
+const CheckboxInput = styled.input`
+  flex-grow: 0;
+  flex-shrink: 0;
+`;
 
 export interface TodoListRef {
   editTitle: (itemId: string) => void;
@@ -39,18 +66,18 @@ const List: ForwardRefRenderFunction<TodoListRef, TodoListProps> = (
   }, [focusedItemId]);
 
   return (
-    <ul>
+    <ListElement>
       {items.map(({ id, title, done }, index) => {
         const editing = id === focusedItemId;
         return (
-          <li key={id}>
-            <input
+          <ItemElement key={id}>
+            <CheckboxInput
               type="checkbox"
               checked={done}
               onChange={() => onItemToggle(id)}
             />
             {editing && (
-              <input
+              <TitleInput
                 type="text"
                 ref={focusedInputRef}
                 value={title}
@@ -58,10 +85,10 @@ const List: ForwardRefRenderFunction<TodoListRef, TodoListProps> = (
               />
             )}
             {!editing && <span onClick={() => setFocusedItemId(id)}>{title}</span>}
-          </li>
+          </ItemElement>
         );
       })}
-    </ul>
+    </ListElement>
   );
 };
 

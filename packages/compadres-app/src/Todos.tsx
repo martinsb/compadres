@@ -1,7 +1,12 @@
 import React, { useRef, useCallback, useEffect } from "react";
 import { TodoList, TodoListRef } from "./components/TodoList";
+import styled from "styled-components";
 
 import useTodos from "./hooks/useTodos";
+
+const Header = styled.h3`
+  margin-bottom: 0;
+`;
 
 export const Todos: React.FC<{projectName: string}> = ({projectName}) => {
   const { items, toggle, add, updateTitle } = useTodos(projectName);
@@ -23,6 +28,7 @@ export const Todos: React.FC<{projectName: string}> = ({projectName}) => {
 
   return (
     <>
+      <Header>{projectName}</Header>
       <TodoList
         items={items}
         onItemToggle={toggle}

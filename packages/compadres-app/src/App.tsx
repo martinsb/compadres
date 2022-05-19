@@ -1,9 +1,21 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
+import styled from "styled-components";
+import { Join } from "./components/Join";
 import { ProjectList } from "./components/ProjectList";
 import { TodoServiceProvider } from "./context/TodoServiceContext";
 import TodoService from "./service/todoService";
 
 import { Todos } from "./Todos";
+
+const Main = styled.div`
+  display: flex;
+  flex-direction: row;
+  margin: var(--spacing);
+`;
+
+const ListContainer = styled.div`
+  width: 300px;
+`;
 
 function App() {
   const [userName, setUserName] = useState("");
@@ -11,10 +23,12 @@ function App() {
   const [projects, setProjects] = useState<
     { name: string; selected: boolean }[]
   >([]);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const serviceRef = useRef<TodoService | undefined>(undefined);
 
   useEffect(() => {
+    setErrorMessage("");
     setConnected(false);
     if (!userName) {
       return;
@@ -26,7 +40,11 @@ function App() {
       setProjects(projects.map((name) => ({ name, selected: false })));
     });
     service.on("error", (e) => {
-      console.log("error", e);
+      if (e.code === "name-taken") {
+        setErrorMessage("This name has already been taken");
+      } else {
+        console.log("error", e);
+      }
     });
     service.connect();
     serviceRef.current = service;
@@ -34,8 +52,6 @@ function App() {
       service.disconnect();
     };
   }, [userName, setUserName, setConnected]);
-
-  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const selectProject = useCallback(
     (name: string, selected: boolean) => {
@@ -56,23 +72,21 @@ function App() {
   return (
     <>
       {!connected && (
-        <>
-          <input ref={nameInputRef} type="text" defaultValue={userName} />
-          <button
-            onClick={() => {
-              setUserName(nameInputRef.current?.value || "");
-            }}
-          >
-            Join
-          </button>
-        </>
+        <Join onLogin={setUserName} errorMessage={errorMessage} />
       )}
       {connected && (
         <TodoServiceProvider service={serviceRef.current!}>
-          <ProjectList projects={projects} onSelectionChange={selectProject} />
-          {projects.filter(({selected}) => selected).map(({name}) => (
-            <Todos key={name} projectName={name} />
-          ))}
+          <Main>
+            <ListContainer>
+              <div>Choose your project(s)</div>
+              <ProjectList projects={projects} onSelectionChange={selectProject} />
+            </ListContainer>
+            <div>
+              {projects.filter(({selected}) => selected).map(({name}) => (
+                <Todos key={name} projectName={name} />
+              ))}
+            </div>
+          </Main>
         </TodoServiceProvider>
       )}
     </>
