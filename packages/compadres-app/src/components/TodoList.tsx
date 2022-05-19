@@ -23,6 +23,8 @@ const DeleteButton = styled.button`
   margin: 0 0 0 10px;
   border: 0;
   background: transparent;
+  flex-grow: 0;
+  flex-shrink: 0;
 
   > svg {
     display: block;
@@ -45,6 +47,7 @@ const ItemElement = styled.li`
 `;
 
 const TitleInput = styled.input`
+  /* Lots of !important because otherwise it's hard to override rules set by picocss */
   padding: 0 !important;
   margin-bottom: 0 !important;
   height: auto !important;
@@ -54,6 +57,10 @@ const TitleInput = styled.input`
   :focus {
     --box-shadow: none !important;
   }
+`;
+
+const TitleText = styled.span`
+  flex-grow: 1;
 `;
 
 const CheckboxInput = styled.input`
@@ -144,21 +151,21 @@ const List: ForwardRefRenderFunction<TodoListRef, TodoListProps> = (
             )}
             {!editing && (
               <>
-                <span
+                <TitleText
                   tabIndex={0}
                   onClick={startEditing}
                   onFocus={startEditing}
                 >
                   {title}
-                </span>
-                <DeleteButton
-                  onClick={() => onRemoveItem(id)}
-                  data-tooltip="Delete item"
-                >
-                  <GarbageIcon />
-                </DeleteButton>
+                </TitleText>
               </>
             )}
+            <DeleteButton
+              onClick={() => onRemoveItem(id)}
+              data-tooltip="Delete item"
+            >
+              <GarbageIcon />
+            </DeleteButton>
           </ItemElement>
         );
       })}
