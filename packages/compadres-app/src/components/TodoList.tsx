@@ -75,13 +75,18 @@ const List: ForwardRefRenderFunction<TodoListRef, TodoListProps> = (
         if (!originalValue.current) {
           return;
         }
+        e.preventDefault();
         onTitleChange(id, originalValue.current);
       } else if (e.key === "Enter") {
+        e.preventDefault();
         setFocusedItemId(undefined);
       } else if (e.key === "Tab") {
-        const currentIndex = items.findIndex(({ id: itemId }) => itemId === id);
-        if (currentIndex === items.length - 1) {
-          onAddItem();
+        if (!e.shiftKey) {
+          const currentIndex = items.findIndex(({ id: itemId }) => itemId === id);
+          if (currentIndex === items.length - 1) {
+            e.preventDefault();
+            onAddItem();
+          }
         }
       }
     },
