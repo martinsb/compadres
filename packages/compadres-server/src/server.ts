@@ -1,11 +1,8 @@
-import express from "express";
 import { RawData, WebSocket, WebSocketServer } from "ws";
 import { createServer } from "http";
 import { TodoService } from "./todos";
 
 import { TodoMessage } from "compadres-common";
-import { assert } from "console";
-import Automerge, { BinaryChange } from "automerge";
 import { encode, decode } from "@msgpack/msgpack";
 
 const users = new Map<WebSocket, string>();
@@ -90,7 +87,6 @@ socketServer.on("connection", async (socket) => {
           },
           socket
         );
-        console.log("changes applied");
       }
     }
   });

@@ -1,6 +1,5 @@
 import {Item, Project} from "compadres-common";
-
-import Automerge, {FreezeObject, BinaryChange, Change, BinaryDocument} from "automerge";
+import Automerge, {BinaryChange, BinaryDocument} from "automerge";
 
 const TODOS: { [key: string]: BinaryDocument } = {
   todo1: Automerge.save(Automerge.from<Project>({
@@ -69,12 +68,8 @@ export class TodoService {
     const project = Automerge.load<Project>(TODOS[projectName]);
     const binChanges = changes.map(c => {
       return Uint8Array.from(c) as BinaryChange;
-      // const bin = Uint8Array.from(c);
-      // (bin as any).__binaryChange = true;
-      // return bin as BinaryChange;
     });
-    const [nextProject, patch] = Automerge.applyChanges(project, binChanges);
-    console.log({patch});
+    const [nextProject] = Automerge.applyChanges(project, binChanges);
     TODOS[projectName] = Automerge.save(nextProject);
   }
 }
