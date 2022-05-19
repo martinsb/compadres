@@ -79,12 +79,17 @@ function App() {
           <Main>
             <ListContainer>
               <div>Choose your project(s)</div>
-              <ProjectList projects={projects} onSelectionChange={selectProject} />
+              <ProjectList
+                projects={projects}
+                onSelectionChange={selectProject}
+              />
             </ListContainer>
             <div>
-              {projects.filter(({selected}) => selected).map(({name}) => (
-                <Todos key={name} projectName={name} />
-              ))}
+              {projects
+                .filter(({ selected }) => selected)
+                .map(({ name }) => (
+                  <Todos key={name} projectName={name} />
+                ))}
             </div>
           </Main>
         </TodoServiceProvider>
