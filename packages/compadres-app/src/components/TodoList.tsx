@@ -1,5 +1,6 @@
 import {
   useState,
+  useCallback,
   useRef,
   forwardRef,
   useImperativeHandle,
@@ -43,10 +44,11 @@ interface TodoListProps {
   items: ReadonlyArray<Item>;
   onItemToggle: (itemId: string) => void;
   onTitleChange: (itemId: string, title: string) => void;
+  onAddItem: () => void;
 }
 
 const List: ForwardRefRenderFunction<TodoListRef, TodoListProps> = (
-  { items, onItemToggle, onTitleChange },
+  { items, onItemToggle, onTitleChange, onAddItem },
   ref
 ) => {
   const [focusedItemId, setFocusedItemId] = useState<string | undefined>(
@@ -58,12 +60,33 @@ const List: ForwardRefRenderFunction<TodoListRef, TodoListProps> = (
     };
   });
 
+  const originalValue = useRef<string | undefined>(undefined);
   const focusedInputRef = useRef<HTMLInputElement | null>(null);
   useLayoutEffect(() => {
     if (focusedItemId) {
       focusedInputRef.current?.select();
+      originalValue.current = focusedInputRef.current?.value;
     }
   }, [focusedItemId]);
+
+  const handleSpecialKeys = useCallback(
+    (id: string, e: React.KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (!originalValue.current) {
+          return;
+        }
+        onTitleChange(id, originalValue.current);
+      } else if (e.key === "Enter") {
+        setFocusedItemId(undefined);
+      } else if (e.key === "Tab") {
+        const currentIndex = items.findIndex(({ id: itemId }) => itemId === id);
+        if (currentIndex === items.length - 1) {
+          onAddItem();
+        }
+      }
+    },
+    [items, onTitleChange, onAddItem]
+  );
 
   return (
     <ListElement>
@@ -83,6 +106,7 @@ const List: ForwardRefRenderFunction<TodoListRef, TodoListProps> = (
                 ref={focusedInputRef}
                 value={title}
                 onChange={(e) => onTitleChange(id, e.target.value)}
+                onKeyDown={(e) => handleSpecialKeys(id, e)}
               />
             )}
             {!editing && (

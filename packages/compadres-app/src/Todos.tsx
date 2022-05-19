@@ -33,6 +33,7 @@ export const Todos: React.FC<{projectName: string}> = ({projectName}) => {
         items={items}
         onItemToggle={toggle}
         onTitleChange={updateTitle}
+        onAddItem={addAndEdit}
         ref={listRef}
       />
       <button onClick={addAndEdit}>Add</button>
