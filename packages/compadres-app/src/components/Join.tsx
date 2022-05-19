@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import styled from "styled-components";
 
 const JoinElement = styled.div`
@@ -18,6 +18,9 @@ interface JoinProps {
 
 export const Join: React.FC<JoinProps> = ({ onLogin, errorMessage, defaultName }) => {
   const nameInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    nameInputRef.current?.focus();
+  }, []);
   return (
     <JoinElement>
       <p>Please enter any name</p>
