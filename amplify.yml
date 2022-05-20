@@ -8,7 +8,6 @@ applications:
             - yarn install
         build:
           commands:
-            - cd packages/compadres-app
             - yarn run build
       artifacts:
         baseDirectory: packages/compadres-app/build
