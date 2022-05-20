@@ -5,7 +5,8 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "build": "./scripts/build.sh"
+    "build": "./scripts/build.sh",
+    "deploy": "./scripts/deploy.sh"
   },
   "workspaces": [
     "./packages/compadres-app",
