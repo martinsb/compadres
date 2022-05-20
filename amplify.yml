@@ -1,0 +1,20 @@
+version: 1
+applications:
+  - frontend:
+      phases:
+        preBuild:
+          commands:
+            - cd packages/compadres-app
+            - yarn install
+        build:
+          commands:
+            - cd packages/compadres-app
+            - yarn run build
+      artifacts:
+        baseDirectory: packages/compadres-app/build
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+    appRoot: .
