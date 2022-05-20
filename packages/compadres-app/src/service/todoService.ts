@@ -27,7 +27,10 @@ export default class TodoService {
 
   constructor({name}: InitOptions) {
     this._name = name;
-    this._socket = new WebSocket("ws://192.168.9.156:3000/todows");
+
+    const url = new URL(window.location.href);
+    const socketUrl = `${url.protocol === "https" ? "wss" : "ws"}://${url.host}/todows`;
+    this._socket = new WebSocket(socketUrl);
     this._socket.addEventListener("message", this._receive.bind(this));
   }
 

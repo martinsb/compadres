@@ -11,11 +11,13 @@
     "@msgpack/msgpack": "^2.7.2",
     "automerge": "^1.0.1-preview.7",
     "express": "^4.18.1",
+    "node-static": "^0.7.11",
     "typescript": "^4.6.4",
     "ws": "^8.6.0"
   },
   "devDependencies": {
     "@types/node": "^16.1.7",
+    "@types/node-static": "^0.7.7",
     "@types/ws": "^8.5.3",
     "ts-node": "^10.7.0"
   }

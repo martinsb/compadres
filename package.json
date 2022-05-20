@@ -4,6 +4,9 @@
   "main": "index.js",
   "license": "MIT",
   "private": true,
+  "scripts": {
+    "build": "./scripts/build.sh"
+  },
   "workspaces": [
     "./packages/compadres-app",
     "./packages/compadres-server",

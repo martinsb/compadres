@@ -1,6 +1,8 @@
+import path from "path";
 import { RawData, WebSocket, WebSocketServer } from "ws";
-import { createServer } from "http";
+import { createServer, Server } from "http";
 import { TodoService } from "./todos";
+import {Server as StaticServer} from "node-static";
 
 import { TodoMessage } from "compadres-common";
 import { encode, decode } from "@msgpack/msgpack";
@@ -12,7 +14,7 @@ const PORT = 3003;
 
 const service = new TodoService();
 
-const httpServer = createServer();
+const httpServer = createHttpServer();
 const socketServer = new WebSocketServer({ noServer: true });
 
 socketServer.on("connection", async (socket) => {
@@ -137,4 +139,14 @@ function broadcast(
       socket.send(encoded);
     }
   }
+}
+
+function createHttpServer() {
+  if (process.env.NODE_ENV === "production") {
+    const fileServer = new StaticServer(path.join(__dirname, "public"));
+    return createServer((req, res) => {
+      fileServer.serve(req, res);
+    });
+  }
+  return createServer();
 }
