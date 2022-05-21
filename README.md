@@ -14,6 +14,8 @@ To make things work, please install [yarn](https://yarnpkg.com/). It could proba
 
 From the project's root folder, just run `yarn install && yarn build`, followed by `yarn deploy`. You will need to have environment variable `COMPADRES_PEM_FILE` set with full path to your .pem file which works with your deployment target (the server, that is).
 
+You will need a web server (like nginx) able to serve static files and virtual host configured to serve them from `/home/ec-user/compadres/build/public` directory (yes, this is very Amazon EC2-specific), and also [pm2](https://pm2.keymetrics.io/) installed globally.
+
 ### Development
 
 Run `yarn install` and then:
